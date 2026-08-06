@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -23,9 +24,16 @@ export default function HomeScreen() {
       contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ThemedView style={styles.container}>
-          <ThemedText type="subtitle" style={styles.titulo}>
-            Registro de 3 días
-          </ThemedText>
+          <ThemedView style={styles.encabezado}>
+            <ThemedText type="subtitle" style={styles.titulo}>
+              Registro de 3 días
+            </ThemedText>
+            <Pressable onPress={() => router.push('/perfil')}>
+              <ThemedText type="link" themeColor="textSecondary">
+                ⚙ Tus datos
+              </ThemedText>
+            </Pressable>
+          </ThemedView>
 
           {cargando ? null : periodoActivo ? (
             <PeriodoDetalle periodoId={periodoActivo.id} />
@@ -70,9 +78,13 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.four,
     paddingBottom: BottomTabInset + Spacing.three,
   },
-  titulo: {
+  encabezado: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: Spacing.one,
   },
+  titulo: {},
   vacio: {
     gap: Spacing.four,
     paddingVertical: Spacing.four,

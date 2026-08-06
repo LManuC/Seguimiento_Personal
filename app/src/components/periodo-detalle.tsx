@@ -13,7 +13,7 @@ import { useRegistro } from '@/lib/registro-context';
 import { comidasCompletadas } from '@/lib/types';
 
 export function PeriodoDetalle({ periodoId }: { periodoId: string }) {
-  const { obtenerPeriodo, finalizarPeriodo, eliminarPeriodo } = useRegistro();
+  const { obtenerPeriodo, finalizarPeriodo, eliminarPeriodo, perfil } = useRegistro();
   const theme = useTheme();
   const [exportando, setExportando] = useState(false);
 
@@ -23,9 +23,20 @@ export function PeriodoDetalle({ periodoId }: { periodoId: string }) {
   }
 
   const handleExportar = async () => {
+    if (!perfil.nombrePaciente?.trim()) {
+      Alert.alert(
+        'Falta tu nombre',
+        'Para generar el PDF con tu nombre, primero completalo en "Tus datos".',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Completar datos', onPress: () => router.push('/perfil') },
+        ]
+      );
+      return;
+    }
     setExportando(true);
     try {
-      await exportarYCompartirPeriodo(periodo);
+      await exportarYCompartirPeriodo(periodo, perfil);
     } catch {
       Alert.alert('No se pudo exportar', 'Ocurrió un problema al generar el PDF.');
     } finally {

@@ -72,3 +72,16 @@ export function diaCompleto(dia: DiaRegistro): boolean {
 export function comidasCompletadas(dia: DiaRegistro): number {
   return Object.values(dia.comidas).filter((c) => c.nota || c.fotoUri).length;
 }
+
+export interface Perfil {
+  nombrePaciente?: string;
+  nombreNutricionista: string;
+  emailNutricionista: string;
+}
+
+export function perfilPorDefecto(): Perfil {
+  return {
+    nombreNutricionista: 'Pilar Olaverry',
+    emailNutricionista: 'nutricion.olaverry@gmail.com',
+  };
+}

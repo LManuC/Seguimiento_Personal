@@ -1,13 +1,12 @@
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { File, Paths } from 'expo-file-system';
 import * as MailComposer from 'expo-mail-composer';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 
 import { fotoABase64 } from '@/lib/fotos';
-import { ETIQUETAS_DESCANSO, PeriodoRegistro, TIPOS_COMIDA } from '@/lib/types';
-
-const EMAIL_NUTRICIONISTA = 'nutricion.olaverry@gmail.com';
+import { ETIQUETAS_DESCANSO, Perfil, PeriodoRegistro, TIPOS_COMIDA } from '@/lib/types';
 
 function escapeHtml(texto: string): string {
   return texto
@@ -16,7 +15,11 @@ function escapeHtml(texto: string): string {
     .replace(/>/g, '&gt;');
 }
 
-async function construirHtml(periodo: PeriodoRegistro): Promise<string> {
+function nombreArchivoSeguro(texto: string): string {
+  return texto.replace(/[\\/:*?"<>|]/g, '').trim();
+}
+
+async function construirHtml(periodo: PeriodoRegistro, perfil: Perfil): Promise<string> {
   const bloquesDias = await Promise.all(
     periodo.dias.map(async (dia) => {
       const fechaLegible = format(parseISO(dia.fecha), "EEEE d 'de' MMMM", { locale: es });
@@ -89,16 +92,23 @@ async function construirHtml(periodo: PeriodoRegistro): Promise<string> {
         </style>
       </head>
       <body>
-        <h1>Registro de 3 días</h1>
+        <h1>Registro de 3 días${perfil.nombrePaciente ? ` — ${escapeHtml(perfil.nombrePaciente)}` : ''}</h1>
         <div class="subtitulo">Generado el ${format(new Date(), "d 'de' MMMM 'de' yyyy, HH:mm", { locale: es })}</div>
         ${bloquesDias.join('')}
       </body>
     </html>`;
 }
 
-export async function exportarYCompartirPeriodo(periodo: PeriodoRegistro): Promise<void> {
-  const html = await construirHtml(periodo);
+export async function exportarYCompartirPeriodo(periodo: PeriodoRegistro, perfil: Perfil): Promise<void> {
+  const html = await construirHtml(periodo, perfil);
   const { uri } = await Print.printToFileAsync({ html });
+
+  const nombrePaciente = perfil.nombrePaciente?.trim() || 'Registro';
+  const fechaArchivo = format(new Date(), 'yyyy-MM-dd');
+  const nombreArchivo = `${nombreArchivoSeguro(nombrePaciente)} - ${fechaArchivo}.pdf`;
+  const destino = new File(Paths.cache, nombreArchivo);
+  if (destino.exists) destino.delete();
+  await new File(uri).copy(destino);
 
   const rangoFechas = periodo.dias.length
     ? `${format(parseISO(periodo.dias[0].fecha), 'd/M', { locale: es })} al ${format(
@@ -111,10 +121,10 @@ export async function exportarYCompartirPeriodo(periodo: PeriodoRegistro): Promi
   const mailDisponible = await MailComposer.isAvailableAsync();
   if (mailDisponible) {
     await MailComposer.composeAsync({
-      recipients: [EMAIL_NUTRICIONISTA],
-      subject: `Registro de 3 días (${rangoFechas})`,
-      body: 'Hola Pilar, te comparto el registro de las comidas y entrenamientos de estos 3 días. ¡Gracias!',
-      attachments: [uri],
+      recipients: [perfil.emailNutricionista],
+      subject: `Registro de 3 días (${rangoFechas})${perfil.nombrePaciente ? ` - ${perfil.nombrePaciente}` : ''}`,
+      body: `Hola ${perfil.nombreNutricionista}, te comparto el registro de las comidas y entrenamientos de estos 3 días. ¡Gracias!`,
+      attachments: [destino.uri],
     });
     return;
   }
@@ -123,7 +133,7 @@ export async function exportarYCompartirPeriodo(periodo: PeriodoRegistro): Promi
   if (!disponible) {
     throw new Error('No hay ninguna app disponible para enviar el registro');
   }
-  await Sharing.shareAsync(uri, {
+  await Sharing.shareAsync(destino.uri, {
     mimeType: 'application/pdf',
     dialogTitle: 'Compartir registro con tu nutricionista',
   });

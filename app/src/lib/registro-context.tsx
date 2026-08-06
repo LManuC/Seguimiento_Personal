@@ -11,11 +11,13 @@ import {
 } from 'react';
 
 import { eliminarFoto } from '@/lib/fotos';
-import { cargarPeriodos, guardarPeriodos } from '@/lib/storage';
+import { cargarPerfil, cargarPeriodos, guardarPerfil, guardarPeriodos } from '@/lib/storage';
 import {
   comidasVacias,
   DiaRegistro,
   entrenamientoVacio,
+  Perfil,
+  perfilPorDefecto,
   PeriodoRegistro,
   RegistroComida,
   RegistroEntrenamiento,
@@ -26,6 +28,8 @@ interface RegistroContextValue {
   periodos: PeriodoRegistro[];
   cargando: boolean;
   periodoActivo: PeriodoRegistro | undefined;
+  perfil: Perfil;
+  actualizarPerfil: (patch: Partial<Perfil>) => Promise<void>;
   obtenerPeriodo: (id: string) => PeriodoRegistro | undefined;
   crearPeriodo: () => Promise<string>;
   actualizarComida: (
@@ -56,16 +60,28 @@ function crearDiasIniciales(): DiaRegistro[] {
 
 export function RegistroProvider({ children }: { children: ReactNode }) {
   const [periodos, setPeriodos] = useState<PeriodoRegistro[]>([]);
+  const [perfil, setPerfil] = useState<Perfil>(perfilPorDefecto());
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    cargarPeriodos()
-      .catch(() => [] as PeriodoRegistro[])
-      .then((cargados) => {
-        setPeriodos(cargados);
-        setCargando(false);
-      });
+    Promise.all([
+      cargarPeriodos().catch(() => [] as PeriodoRegistro[]),
+      cargarPerfil().catch(() => perfilPorDefecto()),
+    ]).then(([periodosCargados, perfilCargado]) => {
+      setPeriodos(periodosCargados);
+      setPerfil(perfilCargado);
+      setCargando(false);
+    });
   }, []);
+
+  const actualizarPerfil = useCallback(
+    async (patch: Partial<Perfil>) => {
+      const siguiente = { ...perfil, ...patch };
+      setPerfil(siguiente);
+      await guardarPerfil(siguiente);
+    },
+    [perfil]
+  );
 
   const persistir = useCallback(async (siguiente: PeriodoRegistro[]) => {
     setPeriodos(siguiente);
@@ -155,6 +171,8 @@ export function RegistroProvider({ children }: { children: ReactNode }) {
     periodos,
     cargando,
     periodoActivo,
+    perfil,
+    actualizarPerfil,
     obtenerPeriodo,
     crearPeriodo,
     actualizarComida,
