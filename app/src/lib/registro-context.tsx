@@ -1,0 +1,171 @@
+import { addDays, format } from 'date-fns';
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import { v4 as uuidv4 } from 'uuid';
+
+import { eliminarFoto } from '@/lib/fotos';
+import { cargarPeriodos, guardarPeriodos } from '@/lib/storage';
+import {
+  comidasVacias,
+  DiaRegistro,
+  entrenamientoVacio,
+  PeriodoRegistro,
+  RegistroComida,
+  RegistroEntrenamiento,
+  TipoComida,
+} from '@/lib/types';
+
+interface RegistroContextValue {
+  periodos: PeriodoRegistro[];
+  cargando: boolean;
+  periodoActivo: PeriodoRegistro | undefined;
+  obtenerPeriodo: (id: string) => PeriodoRegistro | undefined;
+  crearPeriodo: () => Promise<string>;
+  actualizarComida: (
+    periodoId: string,
+    fecha: string,
+    tipo: TipoComida,
+    patch: Partial<RegistroComida>
+  ) => Promise<void>;
+  actualizarEntrenamiento: (
+    periodoId: string,
+    fecha: string,
+    patch: Partial<RegistroEntrenamiento>
+  ) => Promise<void>;
+  finalizarPeriodo: (id: string, finalizado: boolean) => Promise<void>;
+  eliminarPeriodo: (id: string) => Promise<void>;
+}
+
+const RegistroContext = createContext<RegistroContextValue | null>(null);
+
+function crearDiasIniciales(): DiaRegistro[] {
+  const inicio = new Date();
+  return [0, 1, 2].map((offset) => ({
+    fecha: format(addDays(inicio, offset), 'yyyy-MM-dd'),
+    comidas: comidasVacias(),
+    entrenamiento: entrenamientoVacio(),
+  }));
+}
+
+export function RegistroProvider({ children }: { children: ReactNode }) {
+  const [periodos, setPeriodos] = useState<PeriodoRegistro[]>([]);
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    cargarPeriodos().then((cargados) => {
+      setPeriodos(cargados);
+      setCargando(false);
+    });
+  }, []);
+
+  const persistir = useCallback(async (siguiente: PeriodoRegistro[]) => {
+    setPeriodos(siguiente);
+    await guardarPeriodos(siguiente);
+  }, []);
+
+  const obtenerPeriodo = useCallback(
+    (id: string) => periodos.find((p) => p.id === id),
+    [periodos]
+  );
+
+  const crearPeriodo = useCallback(async () => {
+    const nuevo: PeriodoRegistro = {
+      id: uuidv4(),
+      creadoEn: new Date().toISOString(),
+      dias: crearDiasIniciales(),
+      finalizado: false,
+    };
+    await persistir([nuevo, ...periodos]);
+    return nuevo.id;
+  }, [periodos, persistir]);
+
+  const actualizarComida = useCallback(
+    async (periodoId: string, fecha: string, tipo: TipoComida, patch: Partial<RegistroComida>) => {
+      const siguiente = periodos.map((periodo) => {
+        if (periodo.id !== periodoId) return periodo;
+        return {
+          ...periodo,
+          dias: periodo.dias.map((dia) => {
+            if (dia.fecha !== fecha) return dia;
+            return {
+              ...dia,
+              comidas: {
+                ...dia.comidas,
+                [tipo]: { ...dia.comidas[tipo], ...patch },
+              },
+            };
+          }),
+        };
+      });
+      await persistir(siguiente);
+    },
+    [periodos, persistir]
+  );
+
+  const actualizarEntrenamiento = useCallback(
+    async (periodoId: string, fecha: string, patch: Partial<RegistroEntrenamiento>) => {
+      const siguiente = periodos.map((periodo) => {
+        if (periodo.id !== periodoId) return periodo;
+        return {
+          ...periodo,
+          dias: periodo.dias.map((dia) => {
+            if (dia.fecha !== fecha) return dia;
+            return { ...dia, entrenamiento: { ...dia.entrenamiento, ...patch } };
+          }),
+        };
+      });
+      await persistir(siguiente);
+    },
+    [periodos, persistir]
+  );
+
+  const finalizarPeriodo = useCallback(
+    async (id: string, finalizado: boolean) => {
+      const siguiente = periodos.map((periodo) =>
+        periodo.id === id ? { ...periodo, finalizado } : periodo
+      );
+      await persistir(siguiente);
+    },
+    [periodos, persistir]
+  );
+
+  const eliminarPeriodo = useCallback(
+    async (id: string) => {
+      const periodo = periodos.find((p) => p.id === id);
+      periodo?.dias.forEach((dia) => {
+        Object.values(dia.comidas).forEach((comida) => eliminarFoto(comida.fotoUri));
+      });
+      await persistir(periodos.filter((p) => p.id !== id));
+    },
+    [periodos, persistir]
+  );
+
+  const periodoActivo = useMemo(() => periodos.find((p) => !p.finalizado), [periodos]);
+
+  const value: RegistroContextValue = {
+    periodos,
+    cargando,
+    periodoActivo,
+    obtenerPeriodo,
+    crearPeriodo,
+    actualizarComida,
+    actualizarEntrenamiento,
+    finalizarPeriodo,
+    eliminarPeriodo,
+  };
+
+  return <RegistroContext.Provider value={value}>{children}</RegistroContext.Provider>;
+}
+
+export function useRegistro() {
+  const ctx = useContext(RegistroContext);
+  if (!ctx) throw new Error('useRegistro debe usarse dentro de RegistroProvider');
+  return ctx;
+}
