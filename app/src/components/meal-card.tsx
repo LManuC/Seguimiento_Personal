@@ -1,3 +1,4 @@
+import { format } from 'date-fns';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
@@ -24,16 +25,23 @@ export function MealCard({ periodoId, fecha, tipo, etiqueta, comida }: Props) {
   const theme = useTheme();
   const [expandido, setExpandido] = useState(false);
   const [nota, setNota] = useState(comida.nota ?? '');
+  const [horario, setHorario] = useState(comida.horario ?? '');
   const [procesando, setProcesando] = useState(false);
 
   const tieneContenido = Boolean(comida.nota || comida.fotoUri);
+  const horaActual = () => format(new Date(), 'HH:mm');
 
   const guardarFoto = async (uriOrigen: string) => {
     setProcesando(true);
     try {
       const anterior = comida.fotoUri;
       const nuevaUri = await guardarFotoPersistente(uriOrigen, periodoId, fecha, tipo);
-      await actualizarComida(periodoId, fecha, tipo, { fotoUri: nuevaUri });
+      const patch: Partial<RegistroComida> = { fotoUri: nuevaUri };
+      if (!comida.horario) {
+        patch.horario = horaActual();
+        setHorario(patch.horario);
+      }
+      await actualizarComida(periodoId, fecha, tipo, patch);
       if (anterior && anterior !== nuevaUri) eliminarFoto(anterior);
     } catch {
       Alert.alert('No se pudo guardar la foto', 'Intentá de nuevo.');
@@ -76,13 +84,31 @@ export function MealCard({ periodoId, fecha, tipo, etiqueta, comida }: Props) {
         <ThemedView style={styles.header}>
           <ThemedText type="smallBold">{etiqueta}</ThemedText>
           <ThemedText type="small" themeColor={tieneContenido ? 'accent' : 'textSecondary'}>
-            {tieneContenido ? '✓ Registrada' : expandido ? 'Cerrar' : 'Agregar'}
+            {tieneContenido
+              ? `✓ Registrada${comida.horario ? ` · ${comida.horario}` : ''}`
+              : expandido
+                ? 'Cerrar'
+                : 'Agregar'}
           </ThemedText>
         </ThemedView>
       </Pressable>
 
       {expandido && (
         <ThemedView style={styles.body}>
+          <ThemedView style={styles.filaHorario}>
+            <ThemedText type="small" themeColor="textSecondary">
+              Horario
+            </ThemedText>
+            <TextInput
+              value={horario}
+              onChangeText={setHorario}
+              onBlur={() => actualizarComida(periodoId, fecha, tipo, { horario })}
+              placeholder="HH:mm"
+              placeholderTextColor={theme.textSecondary}
+              style={[styles.inputHorario, { color: theme.text, borderColor: theme.backgroundSelected }]}
+            />
+          </ThemedView>
+
           {comida.fotoUri && (
             <Image source={{ uri: comida.fotoUri }} style={styles.foto} contentFit="cover" />
           )}
@@ -110,7 +136,14 @@ export function MealCard({ periodoId, fecha, tipo, etiqueta, comida }: Props) {
           <TextInput
             value={nota}
             onChangeText={setNota}
-            onBlur={() => actualizarComida(periodoId, fecha, tipo, { nota })}
+            onBlur={() => {
+              const patch: Partial<RegistroComida> = { nota };
+              if (nota.trim() && !comida.horario && !horario) {
+                patch.horario = horaActual();
+                setHorario(patch.horario);
+              }
+              actualizarComida(periodoId, fecha, tipo, patch);
+            }}
             placeholder="¿Qué comiste? Cantidades, ingredientes, etc."
             placeholderTextColor={theme.textSecondary}
             multiline
@@ -135,6 +168,19 @@ const styles = StyleSheet.create({
   body: {
     marginTop: Spacing.three,
     gap: Spacing.two,
+  },
+  filaHorario: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  inputHorario: {
+    borderWidth: 1,
+    borderRadius: Spacing.two,
+    paddingVertical: Spacing.one,
+    paddingHorizontal: Spacing.two,
+    width: 90,
+    textAlign: 'center',
   },
   foto: {
     width: '100%',

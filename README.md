@@ -6,9 +6,9 @@ El código de la app vive en [`app/`](app/).
 
 ## Qué hace la app
 
-- **Registro (tab 1):** al tocar "Iniciar registro de 3 días" se crea un período con la fecha de hoy + los 2 días siguientes. Cada día tiene 5 comidas (Desayuno, Media mañana, Almuerzo, Merienda, Cena); para cada una se puede sacar una foto con la cámara, elegir una foto de la galería, y/o escribir una nota de qué se comió.
+- **Registro (tab 1):** al tocar "Iniciar registro de 3 días" se crea un período con la fecha de hoy + los 2 días siguientes. Cada día tiene 5 comidas (Desayuno, Media mañana, Almuerzo, Merienda, Cena); para cada una se puede sacar una foto con la cámara, elegir una foto de la galería, y/o escribir una nota de qué se comió. El **horario** de cada comida se autocompleta con la hora en la que se registra (foto o nota), y también se puede editar a mano.
 - **Entrenamiento por día:** switch "¿Entrenaste hoy?" y, si está activo, campos para tipo de actividad, duración, **tipo de recuperación**, **si notaste mejorías en el rendimiento** y **calidad del descanso** (escala 1 a 5) — los puntos exactos que pide la consigna.
-- **Compartir con tu nutricionista:** genera un PDF con los 3 días (notas + fotos embebidas) y abre el menú nativo de Android para enviarlo por WhatsApp, email, etc.
+- **Enviar por mail a tu nutricionista:** genera un PDF con los 3 días (comidas con horario y foto embebida, más el registro de entrenamiento) y abre la app de mail del celular con el correo prearmado a `nutricion.olaverry@gmail.com`, el PDF adjunto, y asunto/cuerpo ya completados — solo falta tocar "Enviar". Si el celular no tiene una app de mail configurada, cae automáticamente al menú de compartir nativo (WhatsApp, etc.).
 - **Historial (tab 2):** lista de períodos de registro anteriores, para reutilizar la app en cada control futuro.
 - Todo se guarda localmente en el celular (AsyncStorage + almacenamiento de archivos del dispositivo); no hace falta internet ni cuenta para usarla día a día.
 

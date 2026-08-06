@@ -1,10 +1,13 @@
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import * as MailComposer from 'expo-mail-composer';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 
 import { fotoABase64 } from '@/lib/fotos';
 import { ETIQUETAS_DESCANSO, PeriodoRegistro, TIPOS_COMIDA } from '@/lib/types';
+
+const EMAIL_NUTRICIONISTA = 'nutricion.olaverry@gmail.com';
 
 function escapeHtml(texto: string): string {
   return texto
@@ -22,6 +25,7 @@ async function construirHtml(periodo: PeriodoRegistro): Promise<string> {
         TIPOS_COMIDA.map(async ({ tipo, etiqueta }) => {
           const comida = dia.comidas[tipo];
           const nota = comida.nota ? escapeHtml(comida.nota) : '<em>Sin anotación</em>';
+          const horario = comida.horario ? ` · ${escapeHtml(comida.horario)}` : '';
           let imgHtml = '';
           if (comida.fotoUri) {
             const base64 = await fotoABase64(comida.fotoUri);
@@ -31,7 +35,7 @@ async function construirHtml(periodo: PeriodoRegistro): Promise<string> {
           }
           return `
             <div class="comida">
-              <div class="comida-titulo">${etiqueta}</div>
+              <div class="comida-titulo">${etiqueta}${horario}</div>
               <div class="comida-nota">${nota}</div>
               ${imgHtml}
             </div>`;
@@ -95,9 +99,29 @@ async function construirHtml(periodo: PeriodoRegistro): Promise<string> {
 export async function exportarYCompartirPeriodo(periodo: PeriodoRegistro): Promise<void> {
   const html = await construirHtml(periodo);
   const { uri } = await Print.printToFileAsync({ html });
+
+  const rangoFechas = periodo.dias.length
+    ? `${format(parseISO(periodo.dias[0].fecha), 'd/M', { locale: es })} al ${format(
+        parseISO(periodo.dias[periodo.dias.length - 1].fecha),
+        'd/M',
+        { locale: es }
+      )}`
+    : '';
+
+  const mailDisponible = await MailComposer.isAvailableAsync();
+  if (mailDisponible) {
+    await MailComposer.composeAsync({
+      recipients: [EMAIL_NUTRICIONISTA],
+      subject: `Registro de 3 días (${rangoFechas})`,
+      body: 'Hola Pilar, te comparto el registro de las comidas y entrenamientos de estos 3 días. ¡Gracias!',
+      attachments: [uri],
+    });
+    return;
+  }
+
   const disponible = await Sharing.isAvailableAsync();
   if (!disponible) {
-    throw new Error('Compartir no está disponible en este dispositivo');
+    throw new Error('No hay ninguna app disponible para enviar el registro');
   }
   await Sharing.shareAsync(uri, {
     mimeType: 'application/pdf',

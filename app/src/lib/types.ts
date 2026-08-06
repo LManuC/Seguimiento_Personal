@@ -11,6 +11,7 @@ export const TIPOS_COMIDA: { tipo: TipoComida; etiqueta: string }[] = [
 export interface RegistroComida {
   fotoUri?: string;
   nota?: string;
+  horario?: string; // HH:mm
 }
 
 export type CalidadDescanso = 1 | 2 | 3 | 4 | 5;

@@ -85,7 +85,7 @@ export function PeriodoDetalle({ periodoId }: { periodoId: string }) {
           {exportando ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <ThemedText style={styles.botonTexto}>Compartir con tu nutricionista</ThemedText>
+            <ThemedText style={styles.botonTexto}>Enviar por mail a tu nutricionista</ThemedText>
           )}
         </ThemedView>
       </Pressable>
