@@ -1,4 +1,5 @@
 import { addDays, format } from 'date-fns';
+import * as Crypto from 'expo-crypto';
 import {
   createContext,
   ReactNode,
@@ -8,7 +9,6 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { eliminarFoto } from '@/lib/fotos';
 import { cargarPeriodos, guardarPeriodos } from '@/lib/storage';
@@ -59,10 +59,12 @@ export function RegistroProvider({ children }: { children: ReactNode }) {
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    cargarPeriodos().then((cargados) => {
-      setPeriodos(cargados);
-      setCargando(false);
-    });
+    cargarPeriodos()
+      .catch(() => [] as PeriodoRegistro[])
+      .then((cargados) => {
+        setPeriodos(cargados);
+        setCargando(false);
+      });
   }, []);
 
   const persistir = useCallback(async (siguiente: PeriodoRegistro[]) => {
@@ -77,7 +79,7 @@ export function RegistroProvider({ children }: { children: ReactNode }) {
 
   const crearPeriodo = useCallback(async () => {
     const nuevo: PeriodoRegistro = {
-      id: uuidv4(),
+      id: Crypto.randomUUID(),
       creadoEn: new Date().toISOString(),
       dias: crearDiasIniciales(),
       finalizado: false,
