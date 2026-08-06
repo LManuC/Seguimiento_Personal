@@ -79,12 +79,12 @@ async function construirHtml(periodo: PeriodoRegistro): Promise<string> {
           .dia h2 { font-size: 18px; border-bottom: 2px solid #2E9E5B; padding-bottom: 4px; }
           .comida { margin: 10px 0; padding: 8px 12px; background: #f5f6f8; border-radius: 8px; }
           .comida-titulo { font-weight: bold; margin-bottom: 4px; }
-          .comida-nota { font-size: 13px; }
+          .comida-nota { font-size: 13px; white-space: pre-line; }
           .foto { max-width: 260px; max-height: 260px; margin-top: 8px; border-radius: 6px; }
           .entrenamiento { margin-top: 12px; padding: 8px 12px; background: #eef7f0; border-radius: 8px; }
           .entrenamiento-titulo { font-weight: bold; margin-bottom: 4px; }
           table { width: 100%; font-size: 13px; border-collapse: collapse; }
-          td { padding: 2px 0; vertical-align: top; }
+          td { padding: 2px 0; vertical-align: top; white-space: pre-line; }
           td:first-child { width: 45%; color: #555; }
         </style>
       </head>

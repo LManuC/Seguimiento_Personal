@@ -71,8 +71,18 @@ export function PeriodoDetalle({ periodoId }: { periodoId: string }) {
               </ThemedView>
               <ThemedView style={styles.diaCardRow}>
                 <ThemedText type="small">{completas}/5 comidas registradas</ThemedText>
-                <ThemedText type="small" themeColor={dia.entrenamiento.registrado ? 'accent' : 'textSecondary'}>
-                  {dia.entrenamiento.registrado ? '✓ Entrenamiento' : 'Entrenamiento pendiente'}
+                <ThemedText
+                  type="small"
+                  themeColor={
+                    dia.entrenamiento.registrado && dia.entrenamiento.entreno
+                      ? 'accent'
+                      : 'textSecondary'
+                  }>
+                  {!dia.entrenamiento.registrado
+                    ? 'Entrenamiento pendiente'
+                    : dia.entrenamiento.entreno
+                      ? '✓ Entrenó'
+                      : 'No entrenó'}
                 </ThemedText>
               </ThemedView>
             </ThemedView>
