@@ -1,9 +1,9 @@
-import { useState } from 'react';
 import { Pressable, StyleSheet, Switch, TextInput } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
+import { useTextField } from '@/hooks/use-text-field';
 import { useTheme } from '@/hooks/use-theme';
 import { useRegistro } from '@/lib/registro-context';
 import { CalidadDescanso, ETIQUETAS_DESCANSO, RegistroEntrenamiento } from '@/lib/types';
@@ -18,14 +18,26 @@ export function TrainingForm({ periodoId, fecha, entrenamiento }: Props) {
   const { actualizarEntrenamiento } = useRegistro();
   const theme = useTheme();
 
-  const [tipoActividad, setTipoActividad] = useState(entrenamiento.tipoActividad ?? '');
-  const [duracionMin, setDuracionMin] = useState(entrenamiento.duracionMin ?? '');
-  const [tipoRecuperacion, setTipoRecuperacion] = useState(entrenamiento.tipoRecuperacion ?? '');
-  const [mejoraRendimiento, setMejoraRendimiento] = useState(entrenamiento.mejoraRendimiento ?? '');
-  const [notas, setNotas] = useState(entrenamiento.notas ?? '');
-
   const guardarCampo = (patch: Partial<RegistroEntrenamiento>) =>
     actualizarEntrenamiento(periodoId, fecha, { registrado: true, ...patch });
+
+  const [tipoActividad, setTipoActividad] = useTextField(entrenamiento.tipoActividad ?? '', (v) =>
+    guardarCampo({ tipoActividad: v })
+  );
+  const [duracionMin, setDuracionMin] = useTextField(entrenamiento.duracionMin ?? '', (v) =>
+    guardarCampo({ duracionMin: v })
+  );
+  const [tipoRecuperacion, setTipoRecuperacion] = useTextField(
+    entrenamiento.tipoRecuperacion ?? '',
+    (v) => guardarCampo({ tipoRecuperacion: v })
+  );
+  const [mejoraRendimiento, setMejoraRendimiento] = useTextField(
+    entrenamiento.mejoraRendimiento ?? '',
+    (v) => guardarCampo({ mejoraRendimiento: v })
+  );
+  const [notas, setNotas] = useTextField(entrenamiento.notas ?? '', (v) =>
+    guardarCampo({ notas: v })
+  );
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
@@ -43,7 +55,6 @@ export function TrainingForm({ periodoId, fecha, entrenamiento }: Props) {
             <TextInput
               value={tipoActividad}
               onChangeText={setTipoActividad}
-              onBlur={() => guardarCampo({ tipoActividad })}
               placeholder="Ej: Gimnasio - tren superior, fútbol, running..."
               placeholderTextColor={theme.textSecondary}
               style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected }]}
@@ -54,7 +65,6 @@ export function TrainingForm({ periodoId, fecha, entrenamiento }: Props) {
             <TextInput
               value={duracionMin}
               onChangeText={setDuracionMin}
-              onBlur={() => guardarCampo({ duracionMin })}
               placeholder="Ej: 60"
               keyboardType="number-pad"
               placeholderTextColor={theme.textSecondary}
@@ -66,7 +76,6 @@ export function TrainingForm({ periodoId, fecha, entrenamiento }: Props) {
             <TextInput
               value={tipoRecuperacion}
               onChangeText={setTipoRecuperacion}
-              onBlur={() => guardarCampo({ tipoRecuperacion })}
               placeholder="Ej: activa, estiramientos, hielo, masajes, ninguna..."
               placeholderTextColor={theme.textSecondary}
               style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected }]}
@@ -77,7 +86,6 @@ export function TrainingForm({ periodoId, fecha, entrenamiento }: Props) {
             <TextInput
               value={mejoraRendimiento}
               onChangeText={setMejoraRendimiento}
-              onBlur={() => guardarCampo({ mejoraRendimiento })}
               placeholder="Contá qué notaste (fuerza, resistencia, sensación general...)"
               placeholderTextColor={theme.textSecondary}
               multiline
@@ -111,7 +119,6 @@ export function TrainingForm({ periodoId, fecha, entrenamiento }: Props) {
             <TextInput
               value={notas}
               onChangeText={setNotas}
-              onBlur={() => guardarCampo({ notas })}
               placeholder="Horas dormidas, despertares nocturnos, etc."
               placeholderTextColor={theme.textSecondary}
               multiline

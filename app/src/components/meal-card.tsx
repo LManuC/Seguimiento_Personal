@@ -7,6 +7,7 @@ import { Alert, Pressable, StyleSheet, TextInput } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
+import { useTextField } from '@/hooks/use-text-field';
 import { useTheme } from '@/hooks/use-theme';
 import { eliminarFoto, guardarFotoPersistente } from '@/lib/fotos';
 import { useRegistro } from '@/lib/registro-context';
@@ -24,12 +25,22 @@ export function MealCard({ periodoId, fecha, tipo, etiqueta, comida }: Props) {
   const { actualizarComida } = useRegistro();
   const theme = useTheme();
   const [expandido, setExpandido] = useState(false);
-  const [nota, setNota] = useState(comida.nota ?? '');
-  const [horario, setHorario] = useState(comida.horario ?? '');
   const [procesando, setProcesando] = useState(false);
 
   const tieneContenido = Boolean(comida.nota || comida.fotoUri);
   const horaActual = () => format(new Date(), 'HH:mm');
+
+  const [horario, setHorario] = useTextField(comida.horario ?? '', (valor) =>
+    actualizarComida(periodoId, fecha, tipo, { horario: valor })
+  );
+  const [nota, setNota] = useTextField(comida.nota ?? '', (valor) => {
+    const patch: Partial<RegistroComida> = { nota: valor };
+    if (valor.trim() && !comida.horario && !horario) {
+      patch.horario = horaActual();
+      setHorario(patch.horario);
+    }
+    actualizarComida(periodoId, fecha, tipo, patch);
+  });
 
   const guardarFoto = async (uriOrigen: string) => {
     setProcesando(true);
@@ -102,7 +113,6 @@ export function MealCard({ periodoId, fecha, tipo, etiqueta, comida }: Props) {
             <TextInput
               value={horario}
               onChangeText={setHorario}
-              onBlur={() => actualizarComida(periodoId, fecha, tipo, { horario })}
               placeholder="HH:mm"
               placeholderTextColor={theme.textSecondary}
               style={[styles.inputHorario, { color: theme.text, borderColor: theme.backgroundSelected }]}
@@ -136,14 +146,6 @@ export function MealCard({ periodoId, fecha, tipo, etiqueta, comida }: Props) {
           <TextInput
             value={nota}
             onChangeText={setNota}
-            onBlur={() => {
-              const patch: Partial<RegistroComida> = { nota };
-              if (nota.trim() && !comida.horario && !horario) {
-                patch.horario = horaActual();
-                setHorario(patch.horario);
-              }
-              actualizarComida(periodoId, fecha, tipo, patch);
-            }}
             placeholder="¿Qué comiste? Cantidades, ingredientes, etc."
             placeholderTextColor={theme.textSecondary}
             multiline

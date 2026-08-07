@@ -1,7 +1,8 @@
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { ScrollView, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
 import { MealCard } from '@/components/meal-card';
 import { ThemedText } from '@/components/themed-text';
@@ -25,9 +26,10 @@ export default function DiaScreen() {
     : '';
 
   return (
-    <ScrollView
+    <KeyboardAwareScrollView
       style={[styles.scrollView, { backgroundColor: theme.background }]}
-      contentContainerStyle={styles.contentContainer}>
+      contentContainerStyle={styles.contentContainer}
+      bottomOffset={40}>
       <Stack.Screen
         options={{ title: fechaLegible.charAt(0).toUpperCase() + fechaLegible.slice(1) }}
       />
@@ -54,7 +56,7 @@ export default function DiaScreen() {
           />
         </ThemedView>
       )}
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
 

@@ -1,10 +1,11 @@
 import { Stack } from 'expo-router';
-import { useState } from 'react';
-import { ScrollView, StyleSheet, TextInput } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { StyleSheet, TextInput } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { useTextField } from '@/hooks/use-text-field';
 import { useTheme } from '@/hooks/use-theme';
 import { useRegistro } from '@/lib/registro-context';
 
@@ -12,14 +13,23 @@ export default function PerfilScreen() {
   const { perfil, actualizarPerfil } = useRegistro();
   const theme = useTheme();
 
-  const [nombrePaciente, setNombrePaciente] = useState(perfil.nombrePaciente ?? '');
-  const [nombreNutricionista, setNombreNutricionista] = useState(perfil.nombreNutricionista);
-  const [emailNutricionista, setEmailNutricionista] = useState(perfil.emailNutricionista);
+  const [nombrePaciente, setNombrePaciente] = useTextField(perfil.nombrePaciente ?? '', (v) =>
+    actualizarPerfil({ nombrePaciente: v })
+  );
+  const [nombreNutricionista, setNombreNutricionista] = useTextField(
+    perfil.nombreNutricionista,
+    (v) => actualizarPerfil({ nombreNutricionista: v })
+  );
+  const [emailNutricionista, setEmailNutricionista] = useTextField(
+    perfil.emailNutricionista,
+    (v) => actualizarPerfil({ emailNutricionista: v })
+  );
 
   return (
-    <ScrollView
+    <KeyboardAwareScrollView
       style={[styles.scrollView, { backgroundColor: theme.background }]}
-      contentContainerStyle={styles.contentContainer}>
+      contentContainerStyle={styles.contentContainer}
+      bottomOffset={40}>
       <Stack.Screen options={{ title: 'Tus datos' }} />
 
       <ThemedView style={styles.container}>
@@ -31,7 +41,6 @@ export default function PerfilScreen() {
           <TextInput
             value={nombrePaciente}
             onChangeText={setNombrePaciente}
-            onBlur={() => actualizarPerfil({ nombrePaciente })}
             placeholder="Ej: Manuel Carra"
             placeholderTextColor={theme.textSecondary}
             style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected }]}
@@ -43,7 +52,6 @@ export default function PerfilScreen() {
           <TextInput
             value={nombreNutricionista}
             onChangeText={setNombreNutricionista}
-            onBlur={() => actualizarPerfil({ nombreNutricionista })}
             placeholder="Ej: Pilar Olaverry"
             placeholderTextColor={theme.textSecondary}
             style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected }]}
@@ -55,7 +63,6 @@ export default function PerfilScreen() {
           <TextInput
             value={emailNutricionista}
             onChangeText={setEmailNutricionista}
-            onBlur={() => actualizarPerfil({ emailNutricionista })}
             placeholder="Ej: nutricion.olaverry@gmail.com"
             placeholderTextColor={theme.textSecondary}
             keyboardType="email-address"
@@ -64,7 +71,7 @@ export default function PerfilScreen() {
           />
         </ThemedView>
       </ThemedView>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
 
