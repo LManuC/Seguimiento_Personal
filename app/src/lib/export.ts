@@ -6,7 +6,7 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 
 import { fotoABase64 } from '@/lib/fotos';
-import { ETIQUETAS_DESCANSO, Perfil, PeriodoRegistro, TIPOS_COMIDA } from '@/lib/types';
+import { ETIQUETAS_DESCANSO, OPCIONES_AGUA, Perfil, PeriodoRegistro, TIPOS_COMIDA } from '@/lib/types';
 
 function escapeHtml(texto: string): string {
   return texto
@@ -45,6 +45,22 @@ async function construirHtml(periodo: PeriodoRegistro, perfil: Perfil): Promise<
         })
       );
 
+      const aguaOrdenada = [...dia.agua].sort((a, b) => a.horario.localeCompare(b.horario));
+      const aguaHtml = aguaOrdenada.length
+        ? `
+          <div class="entrenamiento">
+            <div class="entrenamiento-titulo">Agua (${aguaOrdenada.length})</div>
+            <table>
+              ${aguaOrdenada
+                .map((a) => {
+                  const etiqueta = OPCIONES_AGUA.find((o) => o.opcion === a.opcion)?.etiqueta ?? '';
+                  return `<tr><td>${escapeHtml(a.horario)}</td><td>${escapeHtml(etiqueta)}</td></tr>`;
+                })
+                .join('')}
+            </table>
+          </div>`
+        : '';
+
       const ent = dia.entrenamiento;
       const entrenamientoHtml = ent.entreno
         ? `
@@ -72,6 +88,7 @@ async function construirHtml(periodo: PeriodoRegistro, perfil: Perfil): Promise<
         <section class="dia">
           <h2>${fechaLegible.charAt(0).toUpperCase() + fechaLegible.slice(1)}</h2>
           ${bloquesComida.join('')}
+          ${aguaHtml}
           ${entrenamientoHtml}
           ${descansoHtml}
         </section>`;

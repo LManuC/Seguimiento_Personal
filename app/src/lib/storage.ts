@@ -10,7 +10,12 @@ export async function cargarPeriodos(): Promise<PeriodoRegistro[]> {
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    // Compatibilidad con registros guardados antes de agregar el campo "agua".
+    return (parsed as PeriodoRegistro[]).map((periodo) => ({
+      ...periodo,
+      dias: periodo.dias.map((dia) => ({ ...dia, agua: dia.agua ?? [] })),
+    }));
   } catch {
     return [];
   }

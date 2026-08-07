@@ -16,9 +16,11 @@ import {
   comidasVacias,
   DiaRegistro,
   entrenamientoVacio,
+  OpcionAgua,
   Perfil,
   perfilPorDefecto,
   PeriodoRegistro,
+  RegistroAgua,
   RegistroComida,
   RegistroEntrenamiento,
   TipoComida,
@@ -43,6 +45,8 @@ interface RegistroContextValue {
     fecha: string,
     patch: Partial<RegistroEntrenamiento>
   ) => Promise<void>;
+  agregarAgua: (periodoId: string, fecha: string, opcion: OpcionAgua) => Promise<void>;
+  eliminarAgua: (periodoId: string, fecha: string, aguaId: string) => Promise<void>;
   finalizarPeriodo: (id: string, finalizado: boolean) => Promise<void>;
   eliminarPeriodo: (id: string) => Promise<void>;
 }
@@ -54,6 +58,7 @@ function crearDiasIniciales(): DiaRegistro[] {
   return [0, 1, 2].map((offset) => ({
     fecha: format(addDays(inicio, offset), 'yyyy-MM-dd'),
     comidas: comidasVacias(),
+    agua: [],
     entrenamiento: entrenamientoVacio(),
   }));
 }
@@ -144,6 +149,45 @@ export function RegistroProvider({ children }: { children: ReactNode }) {
     [periodos, persistir]
   );
 
+  const agregarAgua = useCallback(
+    async (periodoId: string, fecha: string, opcion: OpcionAgua) => {
+      const nuevo: RegistroAgua = {
+        id: Crypto.randomUUID(),
+        horario: format(new Date(), 'HH:mm'),
+        opcion,
+      };
+      const siguiente = periodos.map((periodo) => {
+        if (periodo.id !== periodoId) return periodo;
+        return {
+          ...periodo,
+          dias: periodo.dias.map((dia) =>
+            dia.fecha !== fecha ? dia : { ...dia, agua: [...dia.agua, nuevo] }
+          ),
+        };
+      });
+      await persistir(siguiente);
+    },
+    [periodos, persistir]
+  );
+
+  const eliminarAgua = useCallback(
+    async (periodoId: string, fecha: string, aguaId: string) => {
+      const siguiente = periodos.map((periodo) => {
+        if (periodo.id !== periodoId) return periodo;
+        return {
+          ...periodo,
+          dias: periodo.dias.map((dia) =>
+            dia.fecha !== fecha
+              ? dia
+              : { ...dia, agua: dia.agua.filter((a) => a.id !== aguaId) }
+          ),
+        };
+      });
+      await persistir(siguiente);
+    },
+    [periodos, persistir]
+  );
+
   const finalizarPeriodo = useCallback(
     async (id: string, finalizado: boolean) => {
       const siguiente = periodos.map((periodo) =>
@@ -177,6 +221,8 @@ export function RegistroProvider({ children }: { children: ReactNode }) {
     crearPeriodo,
     actualizarComida,
     actualizarEntrenamiento,
+    agregarAgua,
+    eliminarAgua,
     finalizarPeriodo,
     eliminarPeriodo,
   };

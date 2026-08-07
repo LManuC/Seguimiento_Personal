@@ -4,6 +4,8 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { StyleSheet } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
+import { AguaButton } from '@/components/agua-button';
+import { AguaItem } from '@/components/agua-item';
 import { MealCard } from '@/components/meal-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -11,7 +13,23 @@ import { TrainingForm } from '@/components/training-form';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useRegistro } from '@/lib/registro-context';
-import { TIPOS_COMIDA } from '@/lib/types';
+import { DiaRegistro, HORARIO_REFERENCIA_COMIDA, TIPOS_COMIDA } from '@/lib/types';
+
+type LineaTiempo =
+  | { tipo: 'comida'; horarioOrden: string; comidaTipo: (typeof TIPOS_COMIDA)[number] }
+  | { tipo: 'agua'; horarioOrden: string; id: string };
+
+function construirLineaTiempo(dia: DiaRegistro): LineaTiempo[] {
+  const lineas: LineaTiempo[] = [
+    ...TIPOS_COMIDA.map((comidaTipo) => ({
+      tipo: 'comida' as const,
+      horarioOrden: dia.comidas[comidaTipo.tipo].horario ?? HORARIO_REFERENCIA_COMIDA[comidaTipo.tipo],
+      comidaTipo,
+    })),
+    ...dia.agua.map((a) => ({ tipo: 'agua' as const, horarioOrden: a.horario, id: a.id })),
+  ];
+  return lineas.sort((a, b) => a.horarioOrden.localeCompare(b.horarioOrden));
+}
 
 export default function DiaScreen() {
   const { periodoId, fecha } = useLocalSearchParams<{ periodoId: string; fecha: string }>();
@@ -38,16 +56,27 @@ export default function DiaScreen() {
         <ThemedText themeColor="textSecondary">No se encontró este día.</ThemedText>
       ) : (
         <ThemedView style={styles.container}>
-          {TIPOS_COMIDA.map(({ tipo, etiqueta }) => (
-            <MealCard
-              key={tipo}
-              periodoId={periodo.id}
-              fecha={dia.fecha}
-              tipo={tipo}
-              etiqueta={etiqueta}
-              comida={dia.comidas[tipo]}
-            />
-          ))}
+          <AguaButton periodoId={periodo.id} fecha={dia.fecha} />
+
+          {construirLineaTiempo(dia).map((linea) =>
+            linea.tipo === 'comida' ? (
+              <MealCard
+                key={linea.comidaTipo.tipo}
+                periodoId={periodo.id}
+                fecha={dia.fecha}
+                tipo={linea.comidaTipo.tipo}
+                etiqueta={linea.comidaTipo.etiqueta}
+                comida={dia.comidas[linea.comidaTipo.tipo]}
+              />
+            ) : (
+              <AguaItem
+                key={linea.id}
+                periodoId={periodo.id}
+                fecha={dia.fecha}
+                registro={dia.agua.find((a) => a.id === linea.id)!}
+              />
+            )
+          )}
 
           <TrainingForm
             periodoId={periodo.id}
