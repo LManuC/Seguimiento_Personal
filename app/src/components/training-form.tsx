@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { Pressable, StyleSheet, Switch, TextInput } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -40,59 +41,72 @@ export function TrainingForm({ periodoId, fecha, entrenamiento }: Props) {
   );
 
   return (
-    <ThemedView type="backgroundElement" style={styles.card}>
-      <ThemedView style={styles.header}>
-        <ThemedText type="smallBold">Entrenamiento</ThemedText>
-        <Switch
-          value={entrenamiento.entreno}
-          onValueChange={(entreno) => guardarCampo({ entreno })}
-        />
+    <Fragment>
+      <ThemedView type="backgroundElement" style={styles.card}>
+        <ThemedView style={styles.header}>
+          <ThemedText type="smallBold">Actividad física</ThemedText>
+          <Switch
+            value={entrenamiento.entreno}
+            onValueChange={(entreno) => guardarCampo({ entreno })}
+          />
+        </ThemedView>
+
+        {entrenamiento.entreno ? (
+          <ThemedView style={styles.body}>
+            <Campo etiqueta="¿Qué entrenamiento hiciste?">
+              <TextInput
+                value={tipoActividad}
+                onChangeText={setTipoActividad}
+                placeholder="Ej: Gimnasio - tren superior, fútbol, running..."
+                placeholderTextColor={theme.textSecondary}
+                style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected }]}
+              />
+            </Campo>
+
+            <Campo etiqueta="Duración (minutos)">
+              <TextInput
+                value={duracionMin}
+                onChangeText={setDuracionMin}
+                placeholder="Ej: 60"
+                keyboardType="number-pad"
+                placeholderTextColor={theme.textSecondary}
+                style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected }]}
+              />
+            </Campo>
+
+            <Campo etiqueta="Tipo de recuperación">
+              <TextInput
+                value={tipoRecuperacion}
+                onChangeText={setTipoRecuperacion}
+                placeholder="Ej: activa, estiramientos, hielo, masajes, ninguna..."
+                placeholderTextColor={theme.textSecondary}
+                style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected }]}
+              />
+            </Campo>
+
+            <Campo etiqueta="¿Notaste mejorías en el rendimiento?">
+              <TextInput
+                value={mejoraRendimiento}
+                onChangeText={setMejoraRendimiento}
+                placeholder="Contá qué notaste (fuerza, resistencia, sensación general...)"
+                placeholderTextColor={theme.textSecondary}
+                multiline
+                style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected }]}
+              />
+            </Campo>
+          </ThemedView>
+        ) : (
+          entrenamiento.registrado && (
+            <ThemedText type="small" themeColor="textSecondary" style={styles.sinEntreno}>
+              Registraste que no entrenaste este día.
+            </ThemedText>
+          )
+        )}
       </ThemedView>
 
-      {entrenamiento.entreno ? (
+      <ThemedView type="backgroundElement" style={styles.card}>
+        <ThemedText type="smallBold">Descanso</ThemedText>
         <ThemedView style={styles.body}>
-          <Campo etiqueta="¿Qué entrenamiento hiciste?">
-            <TextInput
-              value={tipoActividad}
-              onChangeText={setTipoActividad}
-              placeholder="Ej: Gimnasio - tren superior, fútbol, running..."
-              placeholderTextColor={theme.textSecondary}
-              style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected }]}
-            />
-          </Campo>
-
-          <Campo etiqueta="Duración (minutos)">
-            <TextInput
-              value={duracionMin}
-              onChangeText={setDuracionMin}
-              placeholder="Ej: 60"
-              keyboardType="number-pad"
-              placeholderTextColor={theme.textSecondary}
-              style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected }]}
-            />
-          </Campo>
-
-          <Campo etiqueta="Tipo de recuperación">
-            <TextInput
-              value={tipoRecuperacion}
-              onChangeText={setTipoRecuperacion}
-              placeholder="Ej: activa, estiramientos, hielo, masajes, ninguna..."
-              placeholderTextColor={theme.textSecondary}
-              style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected }]}
-            />
-          </Campo>
-
-          <Campo etiqueta="¿Notaste mejorías en el rendimiento?">
-            <TextInput
-              value={mejoraRendimiento}
-              onChangeText={setMejoraRendimiento}
-              placeholder="Contá qué notaste (fuerza, resistencia, sensación general...)"
-              placeholderTextColor={theme.textSecondary}
-              multiline
-              style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected }]}
-            />
-          </Campo>
-
           <Campo etiqueta="Calidad del descanso">
             <ThemedView style={styles.escala}>
               {([1, 2, 3, 4, 5] as CalidadDescanso[]).map((valor) => {
@@ -126,14 +140,8 @@ export function TrainingForm({ periodoId, fecha, entrenamiento }: Props) {
             />
           </Campo>
         </ThemedView>
-      ) : (
-        entrenamiento.registrado && (
-          <ThemedText type="small" themeColor="textSecondary" style={styles.sinEntreno}>
-            Registraste que no entrenaste este día.
-          </ThemedText>
-        )
-      )}
-    </ThemedView>
+      </ThemedView>
+    </Fragment>
   );
 }
 

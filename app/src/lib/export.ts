@@ -49,23 +49,31 @@ async function construirHtml(periodo: PeriodoRegistro, perfil: Perfil): Promise<
       const entrenamientoHtml = ent.entreno
         ? `
           <div class="entrenamiento">
-            <div class="entrenamiento-titulo">Entrenamiento</div>
+            <div class="entrenamiento-titulo">Actividad física</div>
             <table>
               <tr><td>Actividad</td><td>${ent.tipoActividad ? escapeHtml(ent.tipoActividad) : '-'}</td></tr>
               <tr><td>Duración</td><td>${ent.duracionMin ? `${escapeHtml(ent.duracionMin)} min` : '-'}</td></tr>
               <tr><td>Tipo de recuperación</td><td>${ent.tipoRecuperacion ? escapeHtml(ent.tipoRecuperacion) : '-'}</td></tr>
               <tr><td>Mejoría en el rendimiento</td><td>${ent.mejoraRendimiento ? escapeHtml(ent.mejoraRendimiento) : '-'}</td></tr>
-              <tr><td>Calidad del descanso</td><td>${ent.calidadDescanso ? escapeHtml(ETIQUETAS_DESCANSO[ent.calidadDescanso]) : '-'}</td></tr>
-              <tr><td>Notas</td><td>${ent.notas ? escapeHtml(ent.notas) : '-'}</td></tr>
             </table>
           </div>`
-        : `<div class="entrenamiento"><div class="entrenamiento-titulo">Entrenamiento</div><p><em>No entrenó este día</em></p></div>`;
+        : `<div class="entrenamiento"><div class="entrenamiento-titulo">Actividad física</div><p><em>No entrenó este día</em></p></div>`;
+
+      const descansoHtml = `
+        <div class="entrenamiento">
+          <div class="entrenamiento-titulo">Descanso</div>
+          <table>
+            <tr><td>Calidad del descanso</td><td>${ent.calidadDescanso ? escapeHtml(ETIQUETAS_DESCANSO[ent.calidadDescanso]) : '-'}</td></tr>
+            <tr><td>Notas</td><td>${ent.notas ? escapeHtml(ent.notas) : '-'}</td></tr>
+          </table>
+        </div>`;
 
       return `
         <section class="dia">
           <h2>${fechaLegible.charAt(0).toUpperCase() + fechaLegible.slice(1)}</h2>
           ${bloquesComida.join('')}
           ${entrenamientoHtml}
+          ${descansoHtml}
         </section>`;
     })
   );
